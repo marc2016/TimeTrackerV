@@ -11,7 +11,15 @@ const openTasks = ref<Task[]>(allTasks.filter(task => !task.done))
 const doneTasks = ref<Task[]>(allTasks.filter(task => task.done))
 
 async function addTask() {
-  const newTaskId = await taskDb.tasks.add({ name: 'Aufgabe 6', description: 'Beschreibung 6', done: false })
+  const newTaskId = await taskDb.tasks.add(
+    {
+      name: '',
+      description: '',
+      done: false,
+      createdAt: new Date(),
+      updatedAt: new Date()
+    }
+  )
   const newTask = await taskDb.tasks.get(newTaskId)
   openTasks.value.push(newTask!)
 }
@@ -23,12 +31,14 @@ function openTaskDetails(task: Task) {
 
 function doneTask(task: Task) {
   task.done = true
+  task.updatedAt = new Date()
   openTasks.value.splice(openTasks.value.indexOf(task), 1)
   doneTasks.value.unshift(task)
 }
 
 function reopenTask(task: Task) {
   task.done = false
+  task.updatedAt = new Date()
   doneTasks.value.splice(doneTasks.value.indexOf(task), 1)
   openTasks.value.unshift(task)
 }
@@ -53,6 +63,7 @@ const selectedTask = ref<Task | null>(null)
 watch(openTasks, async (newTasks) => {
   for (const task of newTasks) {
     if (task.id) {
+      task.updatedAt = new Date()
       await taskDb.tasks.update(task.id, task)
     }
   }
@@ -61,6 +72,7 @@ watch(openTasks, async (newTasks) => {
 watch(doneTasks, async (newTasks) => {
   for (const task of newTasks) {
     if (task.id) {
+      task.updatedAt = new Date()
       await taskDb.tasks.update(task.id, task)
     }
   }

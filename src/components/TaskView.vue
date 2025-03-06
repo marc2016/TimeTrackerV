@@ -1,7 +1,8 @@
 <script setup lang="ts">
-import { mdiRecordCircleOutline, mdiTrashCan, mdiCheckCircleOutline } from '@mdi/js'
+import { mdiRecordCircleOutline, mdiTrashCan, mdiCheckCircleOutline, mdiUpdate } from '@mdi/js'
+import { computed } from 'vue'
 
-defineProps<{ 
+const props = defineProps<{ 
   task: Task,
   openTaskDetails: (task: Task) => void,
   reopenTask: (task: Task) => void,
@@ -9,6 +10,13 @@ defineProps<{
   deleteTask: (task: Task) => void
 }>()
 
+const formattedDate = computed(() => {
+  const date = new Date(props.task.updatedAt)
+  const year = date.getFullYear()
+  const month = String(date.getMonth() + 1).padStart(2, '0')
+  const day = String(date.getDate()).padStart(2, '0')
+  return `${year}-${month}-${day}`
+})
 </script>
 
 <template>
@@ -19,6 +27,13 @@ defineProps<{
     </transition>
     <v-card-title class="multiline-title">{{ task.name }}</v-card-title>
     <v-card-text class="flex-grow-1 multiline-text">{{ task.description }}</v-card-text>
+    <v-card-item>
+      <div class="date-container" v-if="task.updatedAt">
+      <v-icon size="16" :icon="mdiUpdate"></v-icon>
+      <v-label class="text-caption date-label">{{ formattedDate }}</v-label>
+    </div>
+    </v-card-item>
+    
     <v-divider></v-divider>
     <v-card-actions class="card-actions bg-white" @click.stop>
       <v-spacer></v-spacer>
@@ -78,6 +93,13 @@ defineProps<{
   display: -webkit-box;
   -webkit-line-clamp: 3; /* Limit the number of lines */
   -webkit-box-orient: vertical;
+}
+.date-container {
+  display: flex;
+  align-items: center;
+}
+.date-label {
+  margin-left: 6px; /* Adjust the margin as needed */
 }
 .fade-enter-active, .fade-leave-active {
   transition: opacity 1.5s;

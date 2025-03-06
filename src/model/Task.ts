@@ -3,4 +3,6 @@ interface Task {
   name: string
   description: string
   done: boolean
+  createdAt: Date
+  updatedAt: Date
 }
