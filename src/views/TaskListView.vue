@@ -31,14 +31,12 @@ function openTaskDetails(task: Task) {
 
 function doneTask(task: Task) {
   task.done = true
-  task.updatedAt = new Date()
   openTasks.value.splice(openTasks.value.indexOf(task), 1)
   doneTasks.value.unshift(task)
 }
 
 function reopenTask(task: Task) {
   task.done = false
-  task.updatedAt = new Date()
   doneTasks.value.splice(doneTasks.value.indexOf(task), 1)
   openTasks.value.unshift(task)
 }
@@ -59,24 +57,35 @@ function deleteTask(task: Task) {
 const drawer = ref(false)
 const selectedTask = ref<Task | null>(null)
 
-// Überwachen Sie das tasks-Array auf Änderungen und speichern Sie sie in der Datenbank
-watch(openTasks, async (newTasks) => {
-  for (const task of newTasks) {
-    if (task.id) {
-      task.updatedAt = new Date()
-      await taskDb.tasks.update(task.id, task)
+{
+  const { pause, resume } = watch(openTasks, async (newTasks) => {
+    pause()
+    for (const task of newTasks) {
+      if (task.id) {
+        
+        task.updatedAt = new Date()
+        await taskDb.tasks.update(task.id, task)
+      }
     }
-  }
-}, { deep: true })
+    resume()
+  }, { deep: true })
+}
 
-watch(doneTasks, async (newTasks) => {
-  for (const task of newTasks) {
-    if (task.id) {
-      task.updatedAt = new Date()
-      await taskDb.tasks.update(task.id, task)
+
+{
+  const { pause, resume } = watch(doneTasks, async (newTasks) => {
+    pause()
+    for (const task of newTasks) {
+      if (task.id) {
+        task.updatedAt = new Date()
+        await taskDb.tasks.update(task.id, task)
+        
+      }
     }
-  }
-}, { deep: true })
+    resume()
+  }, { deep: true })
+}
+
 
 </script>
 
@@ -101,9 +110,7 @@ watch(doneTasks, async (newTasks) => {
               <TaskView :task="task" :doneTask="doneTask" :reopenTask="reopenTask" :openTaskDetails="openTaskDetails" :deleteTask="deleteTask"></TaskView>
             </v-list-item>
           </template>
-        <!-- </transition-group> -->
-        <v-divider color="darkgray" class="border-opacity-100 mt-8 mb-8"></v-divider>
-        <!-- <transition-group name="list" tag="v-list" class="task-list d-flex flex-wrap"> -->
+          <v-divider color="darkgray" class="border-opacity-100 mt-8 mb-8"></v-divider>
           <template v-for="(task) in doneTasks" :key="task.id" class="d-flex flex-wrap">
             <v-list-item>
               <TaskView :task="task" :doneTask="doneTask" :reopenTask="reopenTask" :openTaskDetails="openTaskDetails" :deleteTask="deleteTask"></TaskView>
