@@ -1,90 +1,114 @@
 <script setup lang="ts">
 
-import { ref, watch } from 'vue'
-import { mdiPlus } from '@mdi/js'
-import taskDb from '../database/TaskDatabase'
-import TaskView from '../components/TaskView.vue'
+  import { computed, ref, watch } from 'vue'
+  import { mdiPlus } from '@mdi/js'
+  import taskDb from '../database/TaskDatabase'
+  import TaskView from '../components/TaskView.vue'
+  import NewTaskDrawer from '../components/NewTaskDrawer.vue'
+import { moveToFirst } from '../helper/ArrayHelper'
 
-// const tasks = ref<Task[]>(await taskDb.tasks.toArray())
-const allTasks = await taskDb.tasks.toArray()
-const openTasks = ref<Task[]>(allTasks.filter(task => !task.done))
-const doneTasks = ref<Task[]>(allTasks.filter(task => task.done))
+  // const tasks = ref<Task[]>(await taskDb.tasks.toArray())
+  const allTasks = ref<Task[]>(await taskDb.tasks.toArray())
+  const openTasks = computed(() => allTasks.value.filter(task => !task.done).sort((a, b) => b.updatedAt.getTime() - a.updatedAt.getTime()))
+  const doneTasks = computed(() => allTasks.value.filter(task => task.done).sort((a, b) => b.updatedAt.getTime() - a.updatedAt.getTime()))
 
-async function addTask() {
-  const newTaskId = await taskDb.tasks.add(
-    {
-      name: '',
-      description: '',
-      done: false,
-      createdAt: new Date(),
-      updatedAt: new Date()
+  const drawer = ref(false)
+  const selectedTask = ref<Task | null>(null)
+  let shouldWatch = true
+
+  async function openNewTask() {
+    drawer.value = true
+  }
+
+  async function addNewTask(newTask : Task) {
+    allTasks.value.unshift(newTask)
+  }
+
+  watch(drawer, (newDrawer) => {
+    if (!newDrawer) {
+      selectedTask.value = null
     }
-  )
-  const newTask = await taskDb.tasks.get(newTaskId)
-  openTasks.value.push(newTask!)
-}
+  })
 
-function openTaskDetails(task: Task) {
-  drawer.value = !drawer.value
-  selectedTask.value = task
-}
-
-function doneTask(task: Task) {
-  task.done = true
-  openTasks.value.splice(openTasks.value.indexOf(task), 1)
-  doneTasks.value.unshift(task)
-}
-
-function reopenTask(task: Task) {
-  task.done = false
-  doneTasks.value.splice(doneTasks.value.indexOf(task), 1)
-  openTasks.value.unshift(task)
-}
-
-function deleteTask(task: Task) {
-  if (task.done) {
-    const index = doneTasks.value.indexOf(task)
-    doneTasks.value.splice(index, 1)
-  } else {
-    const index = openTasks.value.indexOf(task)
-    openTasks.value.splice(index, 1)
+  function openTaskDetails(task: Task) {
+    drawer.value = !drawer.value
+    selectedTask.value = task
   }
-  if (task.id) {
-    taskDb.tasks.delete(task.id)
+
+  function doneTask(task: Task) {
+    task.done = true
+    task.updatedAt = new Date()
+    // moveToFirst(allTasks.value, task)
+    // openTasks.value.splice(openTasks.value.indexOf(task), 1)
+    // doneTasks.value.unshift(task)
   }
-}
 
-const drawer = ref(false)
-const selectedTask = ref<Task | null>(null)
+  function reopenTask(task: Task) {
+    task.done = false
+    task.updatedAt = new Date()
+    // moveToFirst(allTasks.value, task)
+    // doneTasks.value.splice(doneTasks.value.indexOf(task), 1)
+    // openTasks.value.unshift(task)
+  }
 
-{
-  const { pause, resume } = watch(openTasks, async (newTasks) => {
-    pause()
+  function deleteTask(task: Task) {
+    if (task.done) {
+      const index = doneTasks.value.indexOf(task)
+      doneTasks.value.splice(index, 1)
+    } else {
+      const index = openTasks.value.indexOf(task)
+      openTasks.value.splice(index, 1)
+    }
+    if (task.id) {
+      taskDb.tasks.delete(task.id)
+    }
+  }
+
+  function deepCopyTask(task: Task): Task {
+    return {
+      id: task.id,
+      name: task.name,
+      description: task.description,
+      done: task.done,
+      createdAt: new Date(task.createdAt),
+      updatedAt: new Date(task.updatedAt)
+    }
+  }
+
+
+  watch(allTasks, async (newTasks) => {
+    if (!shouldWatch) return
+    shouldWatch = false
     for (const task of newTasks) {
       if (task.id) {
-        
-        task.updatedAt = new Date()
         await taskDb.tasks.update(task.id, task)
+      } else {
+        const taskCopy = deepCopyTask(task)
+        const newTaskId = await taskDb.tasks.add(taskCopy)
+        task.id = newTaskId
       }
     }
-    resume()
+    shouldWatch = true
   }, { deep: true })
-}
 
 
-{
-  const { pause, resume } = watch(doneTasks, async (newTasks) => {
-    pause()
-    for (const task of newTasks) {
-      if (task.id) {
-        task.updatedAt = new Date()
-        await taskDb.tasks.update(task.id, task)
-        
-      }
-    }
-    resume()
-  }, { deep: true })
-}
+
+// {
+//   const { pause, resume } = watch(doneTasks, async (newTasks) => {
+//     pause()
+//     for (const task of newTasks) {
+//       if (task.id) {
+//         // task.updatedAt = new Date()
+//         await taskDb.tasks.update(task.id, task)
+//       } else {
+//         const taskCopy = deepCopyTask(task)
+//         const newTaskId = await taskDb.tasks.add(taskCopy)
+//         task.id = newTaskId
+//       }
+//     }
+//     resume()
+//   }, { deep: true })
+// }
 
 
 </script>
@@ -93,7 +117,8 @@ const selectedTask = ref<Task | null>(null)
   <Suspense>
     <template #default>
       <div>
-        <v-navigation-drawer temporary v-model="drawer" location="right" width="500">
+        <NewTaskDrawer :createTask="addNewTask" v-model:open="drawer" ></NewTaskDrawer>
+        <!-- <v-navigation-drawer temporary v-model="drawer" location="right" width="500" persistent>
           <v-container>
             <div class="text-h4 font-weight-black">Aufgabendetails</div>
             <p class="pa-md-4">
@@ -103,7 +128,7 @@ const selectedTask = ref<Task | null>(null)
               </template>
             </p>
           </v-container>
-        </v-navigation-drawer>
+        </v-navigation-drawer> -->
         <transition-group name="list" tag="v-list" class="task-list d-flex flex-wrap">
           <template v-for="(task) in openTasks" :key="task.id" class="d-flex flex-wrap">
             <v-list-item>
@@ -118,7 +143,7 @@ const selectedTask = ref<Task | null>(null)
           </template>
         </transition-group>
         
-        <v-fab :icon="mdiPlus" class="fab-button" @click="addTask"></v-fab>
+        <v-fab :icon="mdiPlus" class="fab-button" @click="openNewTask"></v-fab>
       </div>
     </template>
     <template #fallback></template>
