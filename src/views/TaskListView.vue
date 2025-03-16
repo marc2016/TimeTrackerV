@@ -5,60 +5,50 @@
   import taskDb from '../database/TaskDatabase'
   import TaskView from '../components/TaskView.vue'
   import NewTaskDrawer from '../components/NewTaskDrawer.vue'
-import { moveToFirst } from '../helper/ArrayHelper'
+import EditTaskDrawer from '../components/EditTaskDrawer.vue'
 
   // const tasks = ref<Task[]>(await taskDb.tasks.toArray())
   const allTasks = ref<Task[]>(await taskDb.tasks.toArray())
   const openTasks = computed(() => allTasks.value.filter(task => !task.done).sort((a, b) => b.updatedAt.getTime() - a.updatedAt.getTime()))
   const doneTasks = computed(() => allTasks.value.filter(task => task.done).sort((a, b) => b.updatedAt.getTime() - a.updatedAt.getTime()))
 
-  const drawer = ref(false)
+  const newTaskDrawer = ref(false)
+  const editTaskDrawer = ref(false)
   const selectedTask = ref<Task | null>(null)
   let shouldWatch = true
 
   async function openNewTask() {
-    drawer.value = true
+    newTaskDrawer.value = true
   }
 
   async function addNewTask(newTask : Task) {
     allTasks.value.unshift(newTask)
   }
 
-  watch(drawer, (newDrawer) => {
+  watch(newTaskDrawer, (newDrawer) => {
     if (!newDrawer) {
       selectedTask.value = null
     }
   })
 
   function openTaskDetails(task: Task) {
-    drawer.value = !drawer.value
+    editTaskDrawer.value = !editTaskDrawer.value
     selectedTask.value = task
   }
 
   function doneTask(task: Task) {
     task.done = true
     task.updatedAt = new Date()
-    // moveToFirst(allTasks.value, task)
-    // openTasks.value.splice(openTasks.value.indexOf(task), 1)
-    // doneTasks.value.unshift(task)
   }
 
   function reopenTask(task: Task) {
     task.done = false
     task.updatedAt = new Date()
-    // moveToFirst(allTasks.value, task)
-    // doneTasks.value.splice(doneTasks.value.indexOf(task), 1)
-    // openTasks.value.unshift(task)
   }
 
-  function deleteTask(task: Task) {
-    if (task.done) {
-      const index = doneTasks.value.indexOf(task)
-      doneTasks.value.splice(index, 1)
-    } else {
-      const index = openTasks.value.indexOf(task)
-      openTasks.value.splice(index, 1)
-    }
+  function deleteTask(task: Task) {    
+    const index = allTasks.value.indexOf(task)
+    allTasks.value.splice(index, 1)
     if (task.id) {
       taskDb.tasks.delete(task.id)
     }
@@ -93,42 +83,14 @@ import { moveToFirst } from '../helper/ArrayHelper'
 
 
 
-// {
-//   const { pause, resume } = watch(doneTasks, async (newTasks) => {
-//     pause()
-//     for (const task of newTasks) {
-//       if (task.id) {
-//         // task.updatedAt = new Date()
-//         await taskDb.tasks.update(task.id, task)
-//       } else {
-//         const taskCopy = deepCopyTask(task)
-//         const newTaskId = await taskDb.tasks.add(taskCopy)
-//         task.id = newTaskId
-//       }
-//     }
-//     resume()
-//   }, { deep: true })
-// }
-
-
 </script>
 
 <template>
   <Suspense>
     <template #default>
       <div>
-        <NewTaskDrawer :createTask="addNewTask" v-model:open="drawer" ></NewTaskDrawer>
-        <!-- <v-navigation-drawer temporary v-model="drawer" location="right" width="500" persistent>
-          <v-container>
-            <div class="text-h4 font-weight-black">Aufgabendetails</div>
-            <p class="pa-md-4">
-              <template v-if="selectedTask">
-                <v-text-field v-model="selectedTask.name" label="Zusammenfassung" variant="outlined"></v-text-field>
-                <v-textarea v-model="selectedTask.description" label="Beschreibung" variant="outlined" rows="4"></v-textarea>
-              </template>
-            </p>
-          </v-container>
-        </v-navigation-drawer> -->
+        <NewTaskDrawer :createTask="addNewTask" v-model:open="newTaskDrawer" ></NewTaskDrawer>
+        <EditTaskDrawer v-model:task="selectedTask" v-model:open="editTaskDrawer" ></EditTaskDrawer>
         <transition-group name="list" tag="v-list" class="task-list d-flex flex-wrap">
           <template v-for="(task) in openTasks" :key="task.id" class="d-flex flex-wrap">
             <v-list-item>

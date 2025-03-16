@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { ref, watch } from 'vue';
+import { VForm } from 'vuetify/components/VForm';
 
 const open = defineModel('open', {
   type: Boolean,
@@ -18,6 +19,12 @@ const task = ref<Task>({
   updatedAt: new Date()
 })
 
+const form = ref<VForm | null>(null)
+
+const nameRules = [
+  (v: string) => !!v || 'Name ist erforderlich'
+]
+
 watch(open, (newOpen) => {
   if (newOpen) {
     task.value = {
@@ -30,14 +37,22 @@ watch(open, (newOpen) => {
   }
 })
 
-function createTaskInternal() {
+async function createTaskInternal() {
   task.value.createdAt = new Date()
   task.value.updatedAt = new Date()
   props.createTask(task.value)
   open.value = false
 }
 
+async function validateAndCreateTask() {
+  if (form.value) {
+    const validation =  await form.value.validate()
+    if(validation.valid)
+      createTaskInternal()
+  }
+}
 </script>
+
 <template>
   <v-navigation-drawer 
     temporary
@@ -46,21 +61,36 @@ function createTaskInternal() {
     width="500" 
     persistent 
   >
-    <v-container>
-      <div class="text-h4 font-weight-black">Neue Aufgabe</div>
-      <p class="pa-md-4">
-        <template v-if="task">
-          <v-text-field v-model="task.name" label="Zusammenfassung" variant="outlined"></v-text-field>
+    <v-form ref="form">
+      <v-container>
+        <v-row>
+          <div class="text-h4 font-weight-black">Neue Aufgabe</div>
+        </v-row>
+        <v-row>
+          <v-text-field
+            v-model="task.name"
+            label="Name"
+            :rules="nameRules"
+            variant="outlined"
+          ></v-text-field>
+        </v-row>
+        <v-row>
           <v-textarea v-model="task.description" label="Beschreibung" variant="outlined" rows="4"></v-textarea>
-        </template>
-        <v-btn variant="outlined" color="success" @click="createTaskInternal()">
-          Anlegen
-        </v-btn>
-        <v-btn variant="outlined" color="error" @click="open = false">
-          Abbrechen
-        </v-btn>
-      </p>
-    </v-container>
+        </v-row>
+        <v-row align-content="end">
+          <v-col cols="auto" align-self="end">
+            <v-btn variant="outlined" color="error" @click="open = false">
+              Abbrechen
+            </v-btn>
+          </v-col>
+          <v-col cols="auto" align-self="end">
+            <v-btn variant="outlined" color="success" @click="validateAndCreateTask">
+              Anlegen
+            </v-btn>
+          </v-col>
+        </v-row>
+      </v-container>
+    </v-form>
   </v-navigation-drawer>
 </template>
 <style scoped>
