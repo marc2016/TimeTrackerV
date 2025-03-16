@@ -64,18 +64,24 @@ async function validateAndCreateTask() {
     <v-form ref="form">
       <v-container>
         <v-row>
-          <div class="text-h4 font-weight-black">Neue Aufgabe</div>
+          <v-col cols="12">
+            <div class="text-h4 font-weight-black">Neue Aufgabe</div>
+          </v-col>
         </v-row>
         <v-row>
-          <v-text-field
-            v-model="task.name"
-            label="Name"
-            :rules="nameRules"
-            variant="outlined"
-          ></v-text-field>
+          <v-col cols="12">
+            <v-text-field
+              v-model="task.name"
+              label="Name"
+              :rules="nameRules"
+              variant="outlined"
+            ></v-text-field>
+          </v-col>
         </v-row>
         <v-row>
-          <v-textarea v-model="task.description" label="Beschreibung" variant="outlined" rows="4"></v-textarea>
+          <v-col cols="12">
+            <v-textarea v-model="task.description" label="Beschreibung" variant="outlined" rows="4"></v-textarea>
+          </v-col>
         </v-row>
         <v-row align-content="end">
           <v-col cols="auto" align-self="end">

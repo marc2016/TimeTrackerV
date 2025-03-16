@@ -21,6 +21,8 @@ const nameRules = [
   (v: string) => !!v || 'Name ist erforderlich'
 ]
 
+
+
 watch(open, async (newOpen) => {
   if (newOpen) {
     internalTask.value = selectedTask.value ? { ...selectedTask.value } : null
@@ -51,22 +53,29 @@ watch(open, async (newOpen) => {
     <v-form ref="form">
       <v-container>
         <v-row>
-          <div class="text-h4 font-weight-black">Aufgabe bearbeiten</div>
+          <v-col cols="12">
+            <div class="text-h4 font-weight-black">Aufgabe bearbeiten</div>
+          </v-col>
         </v-row>
         <v-row v-if="internalTask">
-          <v-text-field
-            v-model="internalTask.name"
-            label="Name"
-            :rules="nameRules"
-            variant="outlined"
-          ></v-text-field>
+          <v-col cols="12">
+            <v-text-field
+              v-model="internalTask.name"
+              label="Name"
+              :rules="nameRules"
+              variant="outlined"
+            ></v-text-field>
+          </v-col>
         </v-row>
         <v-row v-if="internalTask">
-          <v-textarea v-model="internalTask.description" label="Beschreibung" variant="outlined" rows="4"></v-textarea>
+          <v-col cols="12">
+            <v-textarea v-model="internalTask.description" label="Beschreibung" variant="outlined" rows="4"></v-textarea>
+          </v-col>
         </v-row>
       </v-container>
     </v-form>
   </v-navigation-drawer>
 </template>
+
 <style scoped>
 </style>
