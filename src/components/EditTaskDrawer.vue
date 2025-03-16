@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref, watch } from 'vue';
 import { VForm } from 'vuetify/components/VForm';
+import { hasTaskChanged } from '../helper/TaskHelper'
 
 const open = defineModel('open', {
   type: Boolean,
@@ -31,7 +32,7 @@ watch(open, async (newOpen) => {
         return
       }
     }
-    if (internalTask.value) {
+    if (internalTask.value && selectedTask.value && hasTaskChanged(internalTask.value, selectedTask.value)) {
       internalTask.value.updatedAt = new Date()
       Object.assign(selectedTask.value, internalTask.value)
     }
