@@ -49,12 +49,10 @@ import { Task } from '../database/TaskTypes';
     task.updatedAt = new Date()
   }
 
-  function deleteTask(task: Task) {    
+  async function deleteTask(task: Task) {    
     const index = allTasks.value.indexOf(task)
     allTasks.value.splice(index, 1)
-    // if (task.id) {
-    //   taskDb.tasks.delete(task.id)
-    // }
+    await taskDb.deleteFrom('task').where('id', '=', task.id).execute()
   }
 
   function deepCopyTask(task: Task): Task {
@@ -74,7 +72,7 @@ import { Task } from '../database/TaskTypes';
     shouldWatch = false
     for (const task of newTasks) {
       if (task.id) {
-        // await taskDb.updateTable(task.id, task)
+        await taskDb.updateTable('task').set(task).where('id', '=', task.id).execute()
       } else {
         const taskCopy = deepCopyTask(task)
         const result = await taskDb.insertInto('task').values(taskCopy).execute()
