@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref, watch } from 'vue';
 import { VForm } from 'vuetify/components/VForm';
+import { Task } from "../database/TaskDatabase";
 
 const open = defineModel('open', {
   type: Boolean,

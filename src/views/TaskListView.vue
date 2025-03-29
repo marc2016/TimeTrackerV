@@ -2,13 +2,16 @@
 
   import { computed, ref, watch } from 'vue'
   import { mdiPlus } from '@mdi/js'
-  import taskDb from '../database/TaskDatabase'
+  import taskDb from "../database/TaskDatabase";
   import TaskView from '../components/TaskView.vue'
   import NewTaskDrawer from '../components/NewTaskDrawer.vue'
 import EditTaskDrawer from '../components/EditTaskDrawer.vue'
+import { Task } from '../database/TaskTypes';
+
+  const tasksTest = await taskDb.selectFrom('task').selectAll().execute();
 
   // const tasks = ref<Task[]>(await taskDb.tasks.toArray())
-  const allTasks = ref<Task[]>(await taskDb.tasks.toArray())
+  const allTasks = ref<Task[]>(tasksTest)
   const openTasks = computed(() => allTasks.value.filter(task => !task.done).sort((a, b) => b.updatedAt.getTime() - a.updatedAt.getTime()))
   const doneTasks = computed(() => allTasks.value.filter(task => task.done).sort((a, b) => b.updatedAt.getTime() - a.updatedAt.getTime()))
 
@@ -49,9 +52,9 @@ import EditTaskDrawer from '../components/EditTaskDrawer.vue'
   function deleteTask(task: Task) {    
     const index = allTasks.value.indexOf(task)
     allTasks.value.splice(index, 1)
-    if (task.id) {
-      taskDb.tasks.delete(task.id)
-    }
+    // if (task.id) {
+    //   taskDb.tasks.delete(task.id)
+    // }
   }
 
   function deepCopyTask(task: Task): Task {
@@ -71,11 +74,12 @@ import EditTaskDrawer from '../components/EditTaskDrawer.vue'
     shouldWatch = false
     for (const task of newTasks) {
       if (task.id) {
-        await taskDb.tasks.update(task.id, task)
+        // await taskDb.updateTable(task.id, task)
       } else {
         const taskCopy = deepCopyTask(task)
-        const newTaskId = await taskDb.tasks.add(taskCopy)
-        task.id = newTaskId
+        const result = await taskDb.insertInto('task').values(taskCopy).execute()
+        if(result.length > 0 && result[0].insertId !== undefined)
+          task.id = result[0].insertId
       }
     }
     shouldWatch = true

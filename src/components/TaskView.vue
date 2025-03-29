@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { mdiRecordCircleOutline, mdiTrashCan, mdiCheckCircleOutline, mdiUpdate } from '@mdi/js'
 import { computed } from 'vue'
+import { Task } from "../database/TaskDatabase";
 
 const props = defineProps<{ 
   task: Task,

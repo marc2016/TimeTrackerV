@@ -11,6 +11,9 @@
     "core:window:default",
     "core:window:allow-start-dragging",
     "store:default",
+    "sql:allow-load",
+    "sql:default",
+    "sql:allow-execute",
     "fs:default",
     {
       "identifier": "fs:allow-config-write-recursive",

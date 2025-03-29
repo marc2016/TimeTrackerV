@@ -24,6 +24,12 @@
       "csp": null
     }
   },
+  "plugins": {
+    "sql": {
+      "default": true,
+      "allow-load": true
+    }
+  },
   "bundle": {
     "active": true,
     "targets": "all",

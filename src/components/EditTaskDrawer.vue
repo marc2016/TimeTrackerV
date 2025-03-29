@@ -2,6 +2,7 @@
 import { ref, watch } from 'vue';
 import { VForm } from 'vuetify/components/VForm';
 import { hasTaskChanged } from '../helper/TaskHelper'
+import { Task } from "../database/TaskDatabase";
 
 const open = defineModel('open', {
   type: Boolean,

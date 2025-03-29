@@ -1,9 +1,12 @@
 <script setup lang="ts">
-import { onMounted, ref } from "vue";
+import { onMounted, ref, onBeforeMount } from "vue";
 import { RouterView } from 'vue-router'
 
 import { mdiCogs, mdiHome,mdiCheckboxMarkedCircleOutline,mdiAccountCircle } from '@mdi/js';
 import { useSettingsStore } from "./store";
+import { Migrator } from "kysely";
+import taskDb from "./database/TaskDatabase";
+import { CustomMigrationProvider } from "./database/CustomMigrationProvider";
 
 const settingsStore = useSettingsStore();
 
@@ -42,10 +45,26 @@ const items = ref([
         }
       ])
 
-      onMounted(()=>{
-        let topBar = document.getElementById("titlebar");
-        topBar?.children[0].setAttribute("data-tauri-drag-region", "");
-      })
+  onMounted(()=>{
+    let topBar = document.getElementById("titlebar");
+    topBar?.children[0].setAttribute("data-tauri-drag-region", "");
+  })
+
+  onBeforeMount(async ()=>{
+    const migrator = new Migrator({
+      db: taskDb,
+      provider: new CustomMigrationProvider(),
+    });
+
+    const { error, results } = await migrator.migrateToLatest();
+
+    if (error) {
+      console.error('Migration failed:', error);
+      // Handle the error as needed
+    } else {
+      console.log('Migrations applied successfully:', results);
+    }
+  })
 
 </script>
 

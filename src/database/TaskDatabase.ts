@@ -1,19 +1,17 @@
-import { Dexie, type EntityTable } from 'dexie';
+import { appDataDir } from '@tauri-apps/api/path'
+import Database from '@tauri-apps/plugin-sql'
+import { Kysely } from 'kysely'
+import { TauriSqliteDialect } from 'kysely-dialect-tauri';
 
-const taskDb = new Dexie('TaskDatabase') as Dexie & {
-  tasks: EntityTable<Task, 'id'>;
-};
+import { TaskDatabase } from './TaskTypes';
 
-taskDb.version(1).stores({
-  tasks: '++id, name, description, done, createdAt, updatedAt',
-});
+const appData = await appDataDir();
+const dialect = new TauriSqliteDialect({
+  database: async prefix => Database.load(`${prefix}${appData}/task.db`),
+})
 
-export default taskDb;
+const taskDb = new Kysely<TaskDatabase>({
+  dialect
+})
 
-// await db.friends.clear()
-
-// const test = await db.friends
-//       .where('age')
-//       .below(40)
-//       .toArray()
-
+export default taskDb
